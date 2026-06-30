@@ -6,19 +6,19 @@
 -- Partial index (WHERE deleted_at IS NULL) allows soft-deleted rows to
 -- coexist. When a user is re-added to a project, a new row is inserted
 -- and the old soft-deleted row does not violate uniqueness.
-CREATE UNIQUE INDEX idx_project_membership_user_project
+CREATE UNIQUE INDEX idx_auth_project_membership_user_project
     ON auth.project_membership(user_id, project_id)
     WHERE deleted_at IS NULL;
 
 -- Enforces "a permission cannot be granted twice to the same membership".
 -- Same partial-index pattern as above.
-CREATE UNIQUE INDEX idx_project_membership_permission_user_project
+CREATE UNIQUE INDEX idx_auth_project_membership_permission_user_project
     ON auth.project_membership_permission(user_project_id, permission_id)
     WHERE deleted_at IS NULL;
 
 -- Supports reverse lookup: "show all memberships that have permission X".
 -- Used when permission X is revoked globally — find all grants to remove.
-CREATE INDEX idx_project_membership_permission_permission
+CREATE INDEX idx_auth_project_membership_permission_permission
     ON auth.project_membership_permission(permission_id)
     WHERE deleted_at IS NULL;
 
@@ -36,25 +36,51 @@ CREATE INDEX idx_project_membership_permission_permission
 
 -- Uniqueness index for project_name across non-deleted projects.
 -- Tombstones are excluded: a deleted project releases its name.
-CREATE UNIQUE INDEX uq_project_name
+CREATE UNIQUE INDEX uq_projects_project_name
     ON projects.project (project_name)
     WHERE deleted_at IS NULL;
 
 -- Uniqueness index for slug across non-deleted projects.
 -- Same tombstone exclusion pattern as project_name.
-CREATE UNIQUE INDEX uq_project_slug
+CREATE UNIQUE INDEX uq_projects_project_slug
     ON projects.project (slug)
     WHERE deleted_at IS NULL;
 
 -- Supports "list all archived projects" queries.
 -- Covers only archived rows (NULL values excluded by WHERE).
-CREATE INDEX idx_project_archived_at
+CREATE INDEX idx_projects_project_archived_at
     ON projects.project (archived_at)
     WHERE archived_at IS NOT NULL;
 
 -- Supports filtered queries: "show me all ACTIVE projects" or
 -- "show me all ARCHIVED projects". Excludes tombstone rows
 -- because most operational queries filter out deleted projects.
-CREATE INDEX idx_project_status
+CREATE INDEX idx_projects_project_status
     ON projects.project (status)
+    WHERE deleted_at IS NULL;
+
+
+
+-- =========================================================================
+-- TAGS INDEXES
+-- =========================================================================
+CREATE UNIQUE INDEX idx_tags_tag_name_global_uniqueness
+    ON tags.tag (tag_name)
+    WHERE project_id IS NULL AND
+          deleted_at IS NULL;
+
+CREATE UNIQUE INDEX idx_tags_tag_name_per_project
+    ON tags.tag (project_id, tag_name)
+    WHERE project_id IS NOT NULL AND deleted_at IS NULL;
+
+
+-- =========================================================================
+-- ASSET INDEXES
+-- =========================================================================
+CREATE UNIQUE INDEX uq_asset_name_per_project
+    ON assets.asset (project_id, asset_name)
+    WHERE deleted_at IS NULL;
+
+CREATE UNIQUE INDEX uq_asset_codename_per_project
+    ON assets.asset (project_id, asset_codename)
     WHERE deleted_at IS NULL;
