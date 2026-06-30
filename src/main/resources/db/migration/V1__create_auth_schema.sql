@@ -8,7 +8,9 @@
 -- Date: June 29, 2026
 -- =========================================================================
 
-CREATE SCHEMA auth;
+BEGIN TRANSACTION;
+
+CREATE SCHEMA IF NOT EXISTS auth;
 
 -- =========================================================================
 -- Table: auth.app_user
@@ -99,7 +101,9 @@ CREATE TABLE auth.login_history (
     success         BOOLEAN NOT NULL,
 
     -- When the attempt occurred. Server-side timestamp (not client-supplied).
-    attempt_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    attempt_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT pk_login_history PRIMARY KEY (id)
 );
 
 
@@ -215,130 +219,4 @@ CREATE TABLE auth.project_membership_permission (
 );
 
 
--- =========================================================================
--- FOREIGN KEYS
--- =========================================================================
-
--- app_user self-referencing audit FKs.
--- These point back to the user table so we can track which user created,
--- updated, or deleted another user. NULL permitted for bootstrap.
-ALTER TABLE auth.app_user
-    ADD CONSTRAINT fk_app_user_created_by
-        FOREIGN KEY (created_by)
-            REFERENCES auth.app_user(id)
-            ON DELETE RESTRICT;
-
-ALTER TABLE auth.app_user
-    ADD CONSTRAINT fk_app_user_updated_by
-        FOREIGN KEY (updated_by)
-            REFERENCES auth.app_user(id)
-            ON DELETE RESTRICT;
-
-ALTER TABLE auth.app_user
-    ADD CONSTRAINT fk_app_user_deleted_by
-        FOREIGN KEY (deleted_by)
-            REFERENCES auth.app_user(id)
-            ON DELETE RESTRICT;
-
-
--- app_user_profile → app_user
-ALTER TABLE auth.app_user_profile
-    ADD CONSTRAINT fk_app_user_profile_user
-        FOREIGN KEY (user_id)
-            REFERENCES auth.app_user(id)
-            ON DELETE RESTRICT;
-
-ALTER TABLE auth.app_user_profile
-    ADD CONSTRAINT fk_app_user_profile_updated_by
-        FOREIGN KEY (updated_by)
-            REFERENCES auth.app_user(id)
-            ON DELETE RESTRICT;
-
-
--- project_membership FKs
-ALTER TABLE auth.project_membership
-    ADD CONSTRAINT fk_project_membership_user
-        FOREIGN KEY (user_id)
-            REFERENCES auth.app_user(id)
-            ON DELETE RESTRICT;
-
-ALTER TABLE auth.project_membership
-    ADD CONSTRAINT fk_project_membership_project
-        FOREIGN KEY (project_id)
-            REFERENCES projects.project(id)
-            ON DELETE RESTRICT;
-
-ALTER TABLE auth.project_membership
-    ADD CONSTRAINT fk_project_membership_created_by
-        FOREIGN KEY (created_by)
-            REFERENCES auth.app_user(id)
-            ON DELETE RESTRICT;
-
-ALTER TABLE auth.project_membership
-    ADD CONSTRAINT fk_project_membership_updated_by
-        FOREIGN KEY (updated_by)
-            REFERENCES auth.app_user(id)
-            ON DELETE RESTRICT;
-
-ALTER TABLE auth.project_membership
-    ADD CONSTRAINT fk_project_membership_deleted_by
-        FOREIGN KEY (deleted_by)
-            REFERENCES auth.app_user(id)
-            ON DELETE RESTRICT;
-
-
--- project_membership_permission FKs
-ALTER TABLE auth.project_membership_permission
-    ADD CONSTRAINT fk_project_membership_permission_user_project
-        FOREIGN KEY (user_project_id)
-            REFERENCES auth.project_membership(id)
-            ON DELETE RESTRICT;
-
-ALTER TABLE auth.project_membership_permission
-    ADD CONSTRAINT fk_project_membership_permission_permission
-        FOREIGN KEY (permission_id)
-            REFERENCES permissions.permission(id)
-            ON DELETE RESTRICT;
-
-ALTER TABLE auth.project_membership_permission
-    ADD CONSTRAINT fk_project_membership_permission_created_by
-        FOREIGN KEY (created_by)
-            REFERENCES auth.app_user(id)
-            ON DELETE RESTRICT;
-
-ALTER TABLE auth.project_membership_permission
-    ADD CONSTRAINT fk_project_membership_permission_updated_by
-        FOREIGN KEY (updated_by)
-            REFERENCES auth.app_user(id)
-            ON DELETE RESTRICT;
-
-ALTER TABLE auth.project_membership_permission
-    ADD CONSTRAINT fk_project_membership_permission_deleted_by
-        FOREIGN KEY (deleted_by)
-            REFERENCES auth.app_user(id)
-            ON DELETE RESTRICT;
-
-
--- =========================================================================
--- INDEXES
--- =========================================================================
-
--- Enforces "one active membership per user per project".
--- Partial index (WHERE deleted_at IS NULL) allows soft-deleted rows to
--- coexist. When a user is re-added to a project, a new row is inserted
--- and the old soft-deleted row does not violate uniqueness.
-CREATE UNIQUE INDEX idx_project_membership_user_project
-    ON auth.project_membership(user_id, project_id)
-    WHERE deleted_at IS NULL;
-
--- Enforces "a permission cannot be granted twice to the same membership".
--- Same partial-index pattern as above.
-CREATE UNIQUE INDEX idx_project_membership_permission_user_project
-    ON auth.project_membership_permission(user_project_id, permission_id)
-    WHERE deleted_at IS NULL;
-
--- Supports reverse lookup: "show all memberships that have permission X".
--- Used when permission X is revoked globally — find all grants to remove.
-CREATE INDEX idx_project_membership_permission_permission
-    ON auth.project_membership_permission(permission_id)
-    WHERE deleted_at IS NULL;
+COMMIT TRANSACTION;

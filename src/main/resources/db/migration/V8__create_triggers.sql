@@ -25,22 +25,22 @@ $$ LANGUAGE plpgsql;
 -- -----------------------------------
 --         AUTH TRIGGERS
 -- -----------------------------------
-CREATE TRIGGER trg_app_user_update
+CREATE TRIGGER trg_auth_app_user_update
     BEFORE UPDATE ON auth.app_user
     FOR EACH ROW
 EXECUTE PROCEDURE trigger_update_timestamp();
 
-CREATE TRIGGER trg_app_user_profile_update
+CREATE TRIGGER trg_auth_app_user_profile_update
     BEFORE UPDATE ON auth.app_user_profile
     FOR EACH ROW
 EXECUTE PROCEDURE trigger_update_timestamp();
 
-CREATE TRIGGER trg_project_membership_update
+CREATE TRIGGER trg_auth_project_membership_update
     BEFORE UPDATE ON project.project_membership
     FOR EACH ROW
 EXECUTE PROCEDURE trigger_update_timestamp();
 
-CREATE TRIGGER trg_project_membership_permission_update
+CREATE TRIGGER trg_auth_project_membership_permission_update
     BEFORE UPDATE ON project.project_membership_permission
     FOR EACH ROW
 EXECUTE PROCEDURE trigger_update_timestamp();
@@ -48,4 +48,28 @@ EXECUTE PROCEDURE trigger_update_timestamp();
 -- -----------------------------------
 --        PERMISSIONS TRIGGERS
 -- -----------------------------------
+CREATE TRIGGER trg_permissions_action_type_update
+    BEFORE UPDATE ON permissions.action_type
+    FOR EACH ROW
+EXECUTE PROCEDURE trigger_update_timestamp();
+
+CREATE TRIGGER trg_permissions_action_target_update
+    BEFORE UPDATE ON permissions.action_target
+    FOR EACH ROW
+EXECUTE PROCEDURE trigger_update_timestamp();
+
+CREATE TRIGGER trg_permissions_permission_update
+    BEFORE UPDATE ON permissions.permission
+    FOR EACH ROW
+EXECUTE PROCEDURE trigger_update_timestamp();
+
+
+-- -----------------------------------
+--        PROJECTS TRIGGERS
+-- -----------------------------------
+
+CREATE TRIGGER trg_project_project_update
+    BEFORE UPDATE ON projects.project
+    FOR EACH ROW
+EXECUTE PROCEDURE trigger_update_timestamp();
 

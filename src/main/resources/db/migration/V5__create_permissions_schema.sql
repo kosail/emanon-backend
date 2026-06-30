@@ -13,6 +13,8 @@
 -- Date: June 29, 2026
 -- =========================================================================
 
+BEGIN TRANSACTION;
+
 CREATE SCHEMA permissions;
 
 -- =========================================================================
@@ -113,25 +115,6 @@ CREATE TABLE permissions.permission (
 
 
 -- =========================================================================
--- FOREIGN KEYS
--- =========================================================================
-
--- permission → action_type
-ALTER TABLE permissions.permission
-    ADD CONSTRAINT fk_permission_action_type
-        FOREIGN KEY (action_type_id)
-            REFERENCES permissions.action_type(id)
-            ON DELETE RESTRICT;
-
--- permission → action_target
-ALTER TABLE permissions.permission
-    ADD CONSTRAINT fk_permission_action_target
-        FOREIGN KEY (action_target_id)
-            REFERENCES permissions.action_target(id)
-            ON DELETE RESTRICT;
-
-
--- =========================================================================
 -- INDEXES
 -- =========================================================================
 
@@ -142,3 +125,5 @@ ALTER TABLE permissions.permission
 -- No additional indexes on permission: the unique constraint on
 -- (action_type_id, action_target_id) already serves as a composite index,
 -- and the PK index covers id lookups from project_membership_permission.
+
+COMMIT TRANSACTION;
