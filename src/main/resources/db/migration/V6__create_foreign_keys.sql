@@ -1,0 +1,9 @@
+-- -----------------------------------
+-- FOREIGN KEYS
+--
+--
+-- Designed by: kosail
+-- With love, from Honduras.
+--
+-- Date: June 29, 2026
+-- -----------------------------------
