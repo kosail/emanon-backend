@@ -1,12 +1,9 @@
 package com.korealm.emanon.projects.data;
 
-import com.korealm.emanon.auth.data.models.AppUser;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.OffsetDateTime;
 
@@ -23,36 +20,28 @@ public class Project {
     @Column(name = "archived_at")
     private OffsetDateTime archivedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
-    @JoinColumn(name = "archived_by")
-    private AppUser archivedBy;
+    @Column(name = "archived_by")
+    private Long archivedByUserId;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
-    @JoinColumn(name = "created_by", nullable = false)
-    private AppUser createdBy;
+    @Column(name = "created_by", nullable = false)
+    private Long createdByUserId;
 
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
-    @JoinColumn(name = "deleted_by")
-    private AppUser deletedBy;
+    @Column(name = "deleted_by")
+    private Long deletedByUserId;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
-    @JoinColumn(name = "updated_by", nullable = false)
-    private AppUser updatedBy;
+    @Column(name = "updated_by", nullable = false)
+    private Long updatedByUserId;
 
     @ColumnDefault("'ACTIVE'")
     @Column(name = "status", nullable = false, length = 32)

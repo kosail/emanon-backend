@@ -1,6 +1,5 @@
 package com.korealm.emanon.auth.data.models;
 
-import com.korealm.emanon.Project;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,10 +36,8 @@ public class ProjectMembership {
     @JoinColumn(name = "deleted_by")
     private AppUser deletedBy;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
-    @JoinColumn(name = "project_id", nullable = false)
-    private Project project;
+    @Column(name = "project_id", nullable = false)
+    private Long projectId;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "updated_at", nullable = false)

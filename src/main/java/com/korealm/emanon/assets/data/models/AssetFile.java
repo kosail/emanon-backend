@@ -1,6 +1,5 @@
 package com.korealm.emanon.assets.data.models;
 
-import com.korealm.emanon.auth.data.models.AppUser;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,10 +34,8 @@ public class AssetFile {
     @Column(name = "upload_completed_at")
     private OffsetDateTime uploadCompletedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
-    @JoinColumn(name = "uploaded_by", nullable = false)
-    private AppUser uploadedBy;
+    @Column(name = "uploaded_by", nullable = false)
+    private Long uploadedByUserId;
 
     @Column(name = "verified_at")
     private OffsetDateTime verifiedAt;

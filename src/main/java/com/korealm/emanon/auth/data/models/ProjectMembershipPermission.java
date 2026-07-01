@@ -1,6 +1,5 @@
 package com.korealm.emanon.auth.data.models;
 
-import com.korealm.emanon.permissions.data.models.Permission;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,10 +36,8 @@ public class ProjectMembershipPermission {
     @JoinColumn(name = "deleted_by")
     private AppUser deletedBy;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
-    @JoinColumn(name = "permission_id", nullable = false)
-    private Permission permission;
+    @Column(name = "permission_id", nullable = false)
+    private Long permissionId;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "updated_at", nullable = false)

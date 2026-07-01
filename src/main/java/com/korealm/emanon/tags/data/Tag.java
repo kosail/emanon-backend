@@ -1,13 +1,9 @@
 package com.korealm.emanon.tags.data;
 
-import com.korealm.emanon.Project;
-import com.korealm.emanon.auth.data.models.AppUser;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.OffsetDateTime;
 
@@ -25,32 +21,24 @@ public class Tag {
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
-    @JoinColumn(name = "created_by", nullable = false)
-    private AppUser createdBy;
+    @Column(name = "created_by", nullable = false)
+    private Long createdByUserId;
 
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
-    @JoinColumn(name = "deleted_by")
-    private AppUser deletedBy;
+    @Column(name = "deleted_by")
+    private Long deletedByUserId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
-    @JoinColumn(name = "project_id")
-    private Project project;
+    @Column(name = "project_id")
+    private Long projectId;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
-    @JoinColumn(name = "updated_by", nullable = false)
-    private AppUser updatedBy;
+    @Column(name = "updated_by", nullable = false)
+    private Long updatedByUserId;
 
     @Column(name = "tag_name", nullable = false, length = 128)
     private String tagName;

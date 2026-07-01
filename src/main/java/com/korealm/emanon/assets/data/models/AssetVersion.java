@@ -1,6 +1,5 @@
 package com.korealm.emanon.assets.data.models;
 
-import com.korealm.emanon.auth.data.models.AppUser;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,18 +31,14 @@ public class AssetVersion {
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
-    @JoinColumn(name = "created_by", nullable = false)
-    private AppUser createdBy;
+    @Column(name = "created_by", nullable = false)
+    private Long createdByUserId;
 
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
-    @JoinColumn(name = "deleted_by")
-    private AppUser deletedBy;
+    @Column(name = "deleted_by")
+    private Long deletedByUserId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.RESTRICT)
@@ -57,10 +52,8 @@ public class AssetVersion {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
-    @JoinColumn(name = "updated_by", nullable = false)
-    private AppUser updatedBy;
+    @Column(name = "updated_by", nullable = false)
+    private Long updatedBybUserId;
 
     @Column(name = "status", nullable = false, length = 16)
     private String status;
