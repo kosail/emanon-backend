@@ -24,6 +24,14 @@ ALTER TABLE auth.app_user
             ON DELETE RESTRICT;
 
 
+-- login_history -> app_user
+ALTER TABLE auth.login_history
+    ADD CONSTRAINT fk_auth_login_history_user_id
+        FOREIGN KEY (user_id)
+            REFERENCES auth.app_user(id)
+            ON DELETE RESTRICT;
+
+
 -- app_user_profile → app_user
 ALTER TABLE auth.app_user_profile
     ADD CONSTRAINT fk_auth_app_user_profile_user
