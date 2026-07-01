@@ -2,7 +2,7 @@
 
 **Enterprise Metadata & Asset Network, Orchestrator Node.** A videogame asset management system for small teams.
 
-Built with Spring Boot 4 and Kotlin 2.3. It runs as a modular monolith with PostgreSQL 18 for metadata and S3/MinIO for binary files. Nothing more.
+Built with Spring Boot 4 and Java 26. It runs as a modular monolith with PostgreSQL 18 for metadata and S3/MinIO for binary files. Nothing more.
 
 The name came from a manga I love, which is called "Emanon". But a name must have a reason to be, right? So I called it "Enterprise Metadata & Asset Network, Orchestrator Node" and made the acronym fit.
 
@@ -45,7 +45,7 @@ Five modules. Each one has three layers: contracts (interfaces), implementation,
 auth ← projects ← assets ← versions ← permissions
 ```
 
-Auth owns everything related to identity. Permissions owns what actions can be performed. Projects owns the container. Assets owns the logical entity. Versions owns the file. The separation overlaps with database schemas.
+Auth owns everything related to identity. Permissions own what actions can be performed. Projects own the container. Assets own the logical entity. Versions own the file. The separation overlaps with database schemas.
 
 There is no event bus, no message queue, no Redis, no Kubernetes. The upload flow is synchronous: frontend calculates a SHA-256, sends it, backend uploads to S3, verifies the hash, accepts or rejects. The download flow mirrors that: backend sends the file and its hash, frontend verifies locally.
 
@@ -59,14 +59,14 @@ I work alone on this. Splitting into microservices would multiply the operationa
 
 Six schemas are defined, five are implemented:
 
-| Schema | Purpose |
-|---|---|
-| `auth` | User accounts, login history, project memberships |
-| `projects` | Project lifecycle with tombstone deletion |
-| `tags` | Global or project-scoped asset tags |
-| `assets` | Asset identity, versioning, and upload pipeline |
-| `permissions` | Action/target permission matrix |
-| `audit` | Reserved for future |
+| Schema        | Purpose                                           |
+|---------------|---------------------------------------------------|
+| `auth`        | User accounts, login history, project memberships |
+| `projects`    | Project lifecycle with tombstone deletion         |
+| `tags`        | Global or project-scoped asset tags               |
+| `assets`      | Asset identity, versioning, and upload pipeline   |
+| `permissions` | Action/target permission matrix                   |
+| `audit`       | Reserved for future                               |
 
 Every schema uses `TIMESTAMPTZ` for timestamps. Every ID is `BIGINT GENERATED ALWAYS AS IDENTITY`. Soft-delete is the default strategy everywhere except project deletion, which uses a tombstone pattern because assets are large and keeping them around wastes storage.
 
@@ -88,7 +88,7 @@ The `asset_file` table has two CHECK constraints that enforce the upload pipelin
 
 ## Contributing
 
-This is a learning project. I am building it to understand backend architecture, database design, storage systems, and preparing myself to become a senior dev. If you find a bug or an architectural issue, open an issue. If you want to discuss a design decision, please, feel free to open a PR and leave an explanation so I can understand the whys, pros and cons.
+This is a learning project. I am building it to understand backend architecture, database design, storage systems, and preparing myself to become a senior dev. If you find a bug or an architectural issue, open an issue. If you want to discuss a design decision, please, feel free to open a PR and leave an explanation so I can understand the whys, pros, and cons.
 
 ---
 
