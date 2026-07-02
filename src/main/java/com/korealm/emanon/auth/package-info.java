@@ -1,5 +1,6 @@
 @ApplicationModule(
-        displayName = "Authentication"
+        displayName = "Authentication",
+        allowedDependencies = { "projects", "permissions" }
 )
 package com.korealm.emanon.auth;
 

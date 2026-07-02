@@ -1,5 +1,6 @@
 @ApplicationModule(
-        displayName = "Asset Tags"
+        displayName = "Asset Tags",
+        allowedDependencies = { "auth", "projects" }
 )
 package com.korealm.emanon.tags;
 
