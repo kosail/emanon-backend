@@ -27,6 +27,8 @@ CREATE TABLE auth.app_user (
     -- Surrogate primary key. No business meaning.
     id              BIGINT GENERATED ALWAYS AS IDENTITY,
 
+    public_id       UUID NOT NULL DEFAULT uuidv7(),
+
     -- Display name components. Separated (not a single "name" column) so the
     -- UI can render them independently without string parsing.
     first_name      VARCHAR(128) NOT NULL,
@@ -65,7 +67,8 @@ CREATE TABLE auth.app_user (
     -- Constraints
     CONSTRAINT pk_app_user PRIMARY KEY (id),
     CONSTRAINT uq_app_user_username UNIQUE (username),
-    CONSTRAINT uq_app_user_email UNIQUE (email)
+    CONSTRAINT uq_app_user_email UNIQUE (email),
+    CONSTRAINT uq_app_user_public_id UNIQUE (public_id)
 );
 
 
@@ -88,7 +91,8 @@ CREATE TABLE auth.login_history (
 
     -- Origin IP address. Stored as INET (not VARCHAR) for correct sorting,
     -- CIDR matching, and IP family (v4/v6) awareness.
-    ip_address      INET NOT NULL,
+    -- NULL = login attempt failed due to invalid IP address.
+    ip_address      INET,
 
     -- User-Agent header from the login request. Capped at 255 characters
     -- because most UAs fit within that; longer ones are truncated by the
@@ -103,7 +107,12 @@ CREATE TABLE auth.login_history (
     -- When the attempt occurred. Server-side timestamp (not client-supplied).
     attempt_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT pk_login_history PRIMARY KEY (id)
+    CONSTRAINT pk_login_history PRIMARY KEY (id),
+    CONSTRAINT chk_login_history_ip_consistency CHECK (
+        (ip_address IS NULL AND success = FALSE)
+            OR
+        (ip_address IS NOT NULL AND success = TRUE)
+    )
 );
 
 

@@ -8,6 +8,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -18,6 +19,10 @@ public class AppUser {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
+
+    @ColumnDefault("uuidv7()")
+    @Column(name = "public_id", nullable = false)
+    private UUID publicId;
 
     @ColumnDefault("0")
     @Column(name = "token_version", nullable = false)

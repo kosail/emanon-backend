@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -13,6 +14,7 @@ import java.time.OffsetDateTime;
 @Getter
 @Setter
 @Entity
+@DynamicInsert
 @Table(name = "login_history", schema = "auth")
 public class LoginHistory {
     @Id
@@ -32,7 +34,7 @@ public class LoginHistory {
     @JoinColumn(name = "user_id", nullable = false)
     private AppUser user;
 
-    @Column(name = "ip_address", nullable = false)
+    @Column(name = "ip_address")
     private InetAddress ipAddress;
 
     @Column(name = "user_agent", nullable = false)
