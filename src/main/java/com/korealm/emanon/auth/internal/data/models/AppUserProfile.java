@@ -4,8 +4,10 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.Generated;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.generator.EventType;
 
 import java.time.OffsetDateTime;
 
@@ -22,8 +24,9 @@ public class AppUserProfile {
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
 
+    @Generated(event = EventType.UPDATE)
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at", insertable = false, nullable = false)
     private OffsetDateTime updatedAt;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

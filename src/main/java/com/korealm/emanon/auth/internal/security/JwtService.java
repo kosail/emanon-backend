@@ -1,4 +1,4 @@
-package com.korealm.emanon.shared.security;
+package com.korealm.emanon.auth.internal.security;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;

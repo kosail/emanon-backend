@@ -87,7 +87,7 @@ CREATE TABLE auth.login_history (
 
     -- The user attempting to log in. FK to auth.app_user(id).
     -- NOT NULL: anonymous login failures are not tracked in MVP.
-    user_id         BIGINT NOT NULL,
+    user_id         BIGINT,
 
     -- Origin IP address. Stored as INET (not VARCHAR) for correct sorting,
     -- CIDR matching, and IP family (v4/v6) awareness.

@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 import java.time.OffsetDateTime;
 
@@ -18,7 +20,7 @@ public class Tag {
     private Long id;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", insertable = false, updatable = false, nullable = false)
     private OffsetDateTime createdAt;
 
     @Column(name = "created_by", nullable = false)
@@ -33,8 +35,9 @@ public class Tag {
     @Column(name = "project_id")
     private Long projectId;
 
+    @Generated(event = EventType.UPDATE)
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at", insertable = false, nullable = false)
     private OffsetDateTime updatedAt;
 
     @Column(name = "updated_by", nullable = false)

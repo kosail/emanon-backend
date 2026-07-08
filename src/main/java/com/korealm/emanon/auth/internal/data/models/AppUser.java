@@ -4,8 +4,10 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.Generated;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.generator.EventType;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -15,21 +17,24 @@ import java.util.UUID;
 @Entity
 @Table(name = "app_user", schema = "auth")
 public class AppUser {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 
+    @Generated(event = EventType.INSERT)
     @ColumnDefault("uuidv7()")
-    @Column(name = "public_id", nullable = false)
+    @Column(name = "public_id", insertable = false, nullable = false)
     private UUID publicId;
 
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
     @ColumnDefault("0")
-    @Column(name = "token_version", nullable = false)
+    @Column(name = "token_version", insertable = false, nullable = false)
     private Integer tokenVersion;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", insertable = false, updatable = false, nullable = false)
     private OffsetDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -45,12 +50,14 @@ public class AppUser {
     @JoinColumn(name = "deleted_by")
     private AppUser deletedBy;
 
+    @Generated(event = EventType.UPDATE)
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "last_seen_at", nullable = false)
+    @Column(name = "last_seen_at", insertable = false, nullable = false)
     private OffsetDateTime lastSeenAt;
 
+    @Generated(event = EventType.UPDATE)
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at", insertable = false, nullable = false)
     private OffsetDateTime updatedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -72,6 +79,4 @@ public class AppUser {
 
     @Column(name = "username", nullable = false, length = 128)
     private String username;
-
-
 }

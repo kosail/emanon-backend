@@ -1,11 +1,10 @@
 package com.korealm.emanon.auth.web;
 
-import com.korealm.emanon.auth.internal.AuthUserService;
-import com.korealm.emanon.auth.internal.data.dto.LoginRequestDto;
-import com.korealm.emanon.auth.internal.data.dto.LoginResponseDto;
-import com.korealm.emanon.auth.internal.data.dto.RequestMetadata;
+import com.korealm.emanon.auth.internal.data.dto.*;
+import com.korealm.emanon.auth.internal.user.AuthUserService;
 import com.korealm.emanon.shared.security.SecurityHelper;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,15 +18,26 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private final AuthUserService service;
 
-    // LOGIN
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto req, HttpServletRequest httpServletRequest) {
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest req,
+            HttpServletRequest httpServletRequest
+    ) {
         final var meta = new RequestMetadata(
                 SecurityHelper.getClientIpAddress(httpServletRequest),
                 httpServletRequest.getHeader("User-Agent")
         );
 
-        return ResponseEntity.ok(service.loginUser(req, meta));
+        final var res = service.loginUser(req, meta);
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<CreateUserResponse> registerNewUser(
+            @Valid @RequestBody CreateUserRequest req
+    ) {
+        final var res = service.registerNewUser(req);
+        return ResponseEntity.ok(res);
     }
 
     // REFRESH JWT
