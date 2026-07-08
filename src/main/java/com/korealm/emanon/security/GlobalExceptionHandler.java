@@ -1,6 +1,6 @@
-package com.korealm.emanon.shared;
+package com.korealm.emanon.security;
 
-import com.korealm.emanon.shared.api.ApiErrorDto;
+import com.korealm.emanon.security.data.ApiErrorDto;
 import com.korealm.emanon.shared.exceptions.DomainException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;

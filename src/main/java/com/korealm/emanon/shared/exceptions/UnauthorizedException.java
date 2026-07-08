@@ -1,6 +1,5 @@
-package com.korealm.emanon.auth.internal.exception;
+package com.korealm.emanon.shared.exceptions;
 
-import com.korealm.emanon.shared.exceptions.DomainException;
 import org.springframework.http.HttpStatus;
 
 public class UnauthorizedException extends DomainException {

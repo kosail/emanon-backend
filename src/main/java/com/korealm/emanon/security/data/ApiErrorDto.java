@@ -1,4 +1,4 @@
-package com.korealm.emanon.shared.api;
+package com.korealm.emanon.security.data;
 
 import lombok.Builder;
 

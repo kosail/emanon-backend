@@ -1,5 +1,5 @@
 @ApplicationModule(
-        displayName = "Shared infrastructure",
+        displayName = "Minimal shared infrastructure",
         type = ApplicationModule.Type.OPEN
 )
 package com.korealm.emanon.shared;

@@ -1,4 +1,4 @@
-package com.korealm.emanon.shared.security;
+package com.korealm.emanon.security;
 
 import jakarta.servlet.http.HttpServletRequest;
 

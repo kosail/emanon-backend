@@ -1,23 +1,19 @@
-package com.korealm.emanon.auth.internal.security;
+package com.korealm.emanon.security.jwt;
 
-import com.korealm.emanon.auth.internal.data.models.AppUser;
+import com.korealm.emanon.auth.AuthenticationUserInfo;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
-import java.util.Map;
-import java.util.UUID;
 
-@Service
+@Component
 public class JwtService {
 
     @Value("${jwt.secret}") private String secretKey;
@@ -25,39 +21,37 @@ public class JwtService {
     @Value("${jwt.expiration.access}") private long accessExpirationTime;
     @Value("${jwt.expiration.refresh}") private long refreshExpirationTime;
 
-    public String generateAccessToken(AppUserDetailsAdapter userDetailsAdapter) {
-        final var user = userDetailsAdapter.user();
-        return buildToken(user, accessExpirationTime);
+    public String generateAccessToken(final AuthenticationUserInfo authInfo) {
+        return buildToken(authInfo, accessExpirationTime);
     }
 
-    public String generateRefreshToken(AppUserDetailsAdapter userDetailsAdapter) {
-        final var user = userDetailsAdapter.user();
-        return buildToken(user, refreshExpirationTime);
+    public String generateRefreshToken(final AuthenticationUserInfo authInfo) {
+        return buildToken(authInfo, refreshExpirationTime);
     }
 
-    private String buildToken(AppUser user, long expirationTime) {
+    private String buildToken(final AuthenticationUserInfo authInfo, final long expirationTime) {
         final var now = System.currentTimeMillis();
 
         return Jwts.builder()
                 .issuer(issuer)
-                .subject(user.getPublicId().toString())
-                .claim("token_version", user.getTokenVersion())
-                .claim("username", user.getUsername())
+                .subject(authInfo.publicId().toString())
+                .claim("token_version", authInfo.tokenVersion())
+                .claim("username", authInfo.username())
                 .issuedAt(new Date(now))
-                .expiration(new Date(now + accessExpirationTime))
+                .expiration(new Date(now + expirationTime))
                 .signWith(getSignKey())
                 .compact();
     }
 
-    public String extractSubject(String token) {
+    public String extractSubject(final String token) {
         return parseClaims(token).getSubject();
     }
 
-    public Integer extractTokenVersion(String token) {
-        return (Integer) parseClaims(token).get("jwt_version", Integer.class);
+    public Integer extractTokenVersion(final String token) {
+        return parseClaims(token).get("token_version", Integer.class);
     }
 
-    public boolean isTokenValid (String token) {
+    public boolean isTokenValid (final String token) {
         try {
             // throws if expired, malformed, wrong signature
             parseClaims(token);
@@ -67,7 +61,7 @@ public class JwtService {
         }
     }
 
-    private Claims parseClaims(String token) {
+    private Claims parseClaims(final String token) {
         return Jwts.parser()
                 .verifyWith((SecretKey) getSignKey())
                 .requireIssuer(issuer)

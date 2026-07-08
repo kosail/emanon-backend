@@ -2,7 +2,7 @@ package com.korealm.emanon.auth.web;
 
 import com.korealm.emanon.auth.internal.data.dto.*;
 import com.korealm.emanon.auth.internal.user.AuthUserService;
-import com.korealm.emanon.shared.security.SecurityHelper;
+import com.korealm.emanon.security.SecurityHelper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -1,5 +1,6 @@
 package com.korealm.emanon.auth.internal.user;
 
+import com.korealm.emanon.auth.AuthenticationUserInfo;
 import com.korealm.emanon.auth.api.UserLookupPort;
 import com.korealm.emanon.auth.internal.data.dto.*;
 import com.korealm.emanon.auth.internal.data.models.AppUser;
@@ -8,13 +9,14 @@ import com.korealm.emanon.auth.internal.data.models.LoginHistory;
 import com.korealm.emanon.auth.internal.data.repositories.AppUserProfileRepository;
 import com.korealm.emanon.auth.internal.data.repositories.AppUserRepository;
 import com.korealm.emanon.auth.internal.data.repositories.LoginHistoryRepository;
-import com.korealm.emanon.auth.internal.exception.UnauthorizedException;
+import com.korealm.emanon.shared.exceptions.UnauthorizedException;
 import com.korealm.emanon.auth.internal.exception.UserAlreadyExistsException;
 import com.korealm.emanon.auth.internal.exception.UserNotFoundException;
 import com.korealm.emanon.auth.internal.security.AppUserDetailsAdapter;
-import com.korealm.emanon.auth.internal.security.JwtService;
+import com.korealm.emanon.security.TokenResolver;
 import com.korealm.emanon.shared.exceptions.DomainException;
 import com.korealm.emanon.shared.exceptions.InvalidSourceIpAddressException;
+import com.korealm.emanon.security.jwt.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.http.HttpStatus;
@@ -27,8 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Objects;
-import java.util.UUID;
 
 @NullMarked
 @Service
@@ -42,6 +42,7 @@ public class AuthUserService implements UserLookupPort {
     private final JwtService jwtService;
     private final AuthenticationManager authManager;
     private final PasswordEncoder passwordEncoder;
+    private final TokenResolver tokenResolver;
 
     /**
      * Authenticates a user via Spring Security's AuthenticationManager.
@@ -84,8 +85,14 @@ public class AuthUserService implements UserLookupPort {
 
         loginHistoryRepo.save(loginHistory);
 
-        final var accessToken = jwtService.generateAccessToken(principal);
-        final var refreshToken = jwtService.generateRefreshToken(principal);
+        final var authInfo = AuthenticationUserInfo.builder()
+                .publicId(user.getPublicId())
+                .username(user.getUsername())
+                .tokenVersion(user.getTokenVersion())
+                .build();
+
+        final var accessToken = jwtService.generateAccessToken(authInfo);
+        final var refreshToken = jwtService.generateRefreshToken(authInfo);
 
         final var profilePicture = profileRepo.findByUserId(user.getId());
         final var profilePictureUrl = profilePicture.map(AppUserProfile::getProfilePictureUrl).orElse(null);
@@ -130,27 +137,19 @@ public class AuthUserService implements UserLookupPort {
     }
 
     public TokenRefreshResponse refreshToken(String refreshToken) {
-        // 1. Validate the refresh token cryptographically
-        if (!jwtService.isTokenValid(refreshToken)) {
-            throw new UnauthorizedException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
-        }
+        // 1. Resolve the user in a UserDetails object
+        final var userDetails = tokenResolver.resolveToken(refreshToken);
+        final var user = ((AppUserDetailsAdapter) userDetails).user();
 
-        // 2. Resolve the user
-        final var subject = jwtService.extractSubject(refreshToken);
-        final var publicId = UUID.fromString(subject);
-        final var user = userRepo.findByPublicId(publicId)
-                .orElseThrow(() -> new UnauthorizedException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
+        // 2. Issue a new pair of tokens
+        final var authInfo = AuthenticationUserInfo.builder()
+                .publicId(user.getPublicId())
+                .username(user.getUsername())
+                .tokenVersion(user.getTokenVersion())
+                .build();
 
-        // 3. Check token_version match
-        final var tokenVersion = jwtService.extractTokenVersion(refreshToken);
-        if (!user.getTokenVersion().equals(tokenVersion)) {
-            throw new UnauthorizedException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
-        }
-
-        // 4. Issue new pair
-        final var adapter = new AppUserDetailsAdapter(user);
-        final var accessToken = jwtService.generateAccessToken(adapter);
-        final var newRefreshToken = jwtService.generateRefreshToken(adapter);
+        final var accessToken = jwtService.generateAccessToken(authInfo);
+        final var newRefreshToken = jwtService.generateRefreshToken(authInfo);
 
         return TokenRefreshResponse.builder()
                 .accessToken(accessToken)
