@@ -3,10 +3,7 @@ package com.korealm.emanon.auth.internal.data.models;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.Generated;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.*;
 import org.hibernate.generator.EventType;
 
 import java.time.OffsetDateTime;
@@ -15,6 +12,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
+@DynamicInsert
 @Table(name = "app_user", schema = "auth")
 public class AppUser {
 
@@ -28,9 +26,8 @@ public class AppUser {
     @Column(name = "public_id", insertable = false, nullable = false)
     private UUID publicId;
 
-    @Generated(event = {EventType.INSERT, EventType.UPDATE})
     @ColumnDefault("0")
-    @Column(name = "token_version", insertable = false, nullable = false)
+    @Column(name = "token_version", nullable = false)
     private Integer tokenVersion;
 
     @ColumnDefault("CURRENT_TIMESTAMP")

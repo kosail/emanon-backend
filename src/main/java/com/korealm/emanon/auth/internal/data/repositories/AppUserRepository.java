@@ -8,10 +8,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface AppUserRepository extends JpaRepository<AppUser, java.lang.Long> {
     Optional<AppUser> findByIdAndDeletedAtIsNull(@NotNull Long userId);
     Optional<AppUser> findByUsername(@NotBlank String username);
     Optional<AppUser> findByUsernameOrEmail(@NotBlank String username, @NotNull @Email String email);
+    Optional<AppUser> findByPublicId(@NotNull UUID publicId);
 }

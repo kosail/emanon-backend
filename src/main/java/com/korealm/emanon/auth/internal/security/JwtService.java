@@ -1,5 +1,8 @@
 package com.korealm.emanon.auth.internal.security;
 
+import com.korealm.emanon.auth.internal.data.models.AppUser;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -8,43 +11,73 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret}") private String SECRET_KEY;
-    @Value("${jwt.issuer}") private String ISSUER;
-    private static final int EXPIRATION_TIME = 1000 * 60 * 60;
+    @Value("${jwt.secret}") private String secretKey;
+    @Value("${jwt.issuer}") private String issuer;
+    @Value("${jwt.expiration.access}") private long accessExpirationTime;
+    @Value("${jwt.expiration.refresh}") private long refreshExpirationTime;
 
-    public String generateToken(UserDetails userDetails, Integer jwtVersion) {
-        Map<String, Object> claims = Map.of(
-                "jwt_version", jwtVersion,
-                "authorities", userDetails
-                        .getAuthorities()
-                        .stream()
-                        .map(GrantedAuthority::getAuthority)
-                        .toList()
-        );
-
-        return generateToken(claims, userDetails.getUsername());
+    public String generateAccessToken(AppUserDetailsAdapter userDetailsAdapter) {
+        final var user = userDetailsAdapter.user();
+        return buildToken(user, accessExpirationTime);
     }
 
-    public String generateToken(Map<String, Object> claims, String subject) {
+    public String generateRefreshToken(AppUserDetailsAdapter userDetailsAdapter) {
+        final var user = userDetailsAdapter.user();
+        return buildToken(user, refreshExpirationTime);
+    }
+
+    private String buildToken(AppUser user, long expirationTime) {
+        final var now = System.currentTimeMillis();
+
         return Jwts.builder()
-                .claims(claims)
-                .issuer(ISSUER)
-                .subject(subject)
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .issuer(issuer)
+                .subject(user.getPublicId().toString())
+                .claim("token_version", user.getTokenVersion())
+                .claim("username", user.getUsername())
+                .issuedAt(new Date(now))
+                .expiration(new Date(now + accessExpirationTime))
                 .signWith(getSignKey())
                 .compact();
     }
 
+    public String extractSubject(String token) {
+        return parseClaims(token).getSubject();
+    }
+
+    public Integer extractTokenVersion(String token) {
+        return (Integer) parseClaims(token).get("jwt_version", Integer.class);
+    }
+
+    public boolean isTokenValid (String token) {
+        try {
+            // throws if expired, malformed, wrong signature
+            parseClaims(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parser()
+                .verifyWith((SecretKey) getSignKey())
+                .requireIssuer(issuer)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
     private Key getSignKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }

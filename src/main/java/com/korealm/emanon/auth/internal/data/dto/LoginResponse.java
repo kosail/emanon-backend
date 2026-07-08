@@ -14,6 +14,7 @@ public record LoginResponse(
         @NotBlank String username,
         @NotBlank String firstName,
         @NotBlank String lastName,
-        @NotBlank String token,
+        @NotBlank String accessToken,
+        @NotBlank String refreshToken,
         @Nullable String profilePictureUrl
 ) {}

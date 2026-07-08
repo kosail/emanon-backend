@@ -21,14 +21,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Objects;
+import java.util.UUID;
 
 @NullMarked
 @Service
@@ -79,12 +79,13 @@ public class AuthUserService implements UserLookupPort {
         }
 
         // 4. Success: record login history
-        final AppUser user = principal.getUser();
+        final AppUser user = principal.user();
         final var loginHistory = generateLogin(user, meta, true);
 
         loginHistoryRepo.save(loginHistory);
 
-        final var token = jwtService.generateToken(principal, user.getTokenVersion());
+        final var accessToken = jwtService.generateAccessToken(principal);
+        final var refreshToken = jwtService.generateRefreshToken(principal);
 
         final var profilePicture = profileRepo.findByUserId(user.getId());
         final var profilePictureUrl = profilePicture.map(AppUserProfile::getProfilePictureUrl).orElse(null);
@@ -94,7 +95,8 @@ public class AuthUserService implements UserLookupPort {
                 .username(user.getUsername())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
-                .token(token)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .profilePictureUrl(profilePictureUrl)
                 .build();
     }
@@ -127,7 +129,34 @@ public class AuthUserService implements UserLookupPort {
                 .build();
     }
 
-    // REFRESH JWT
+    public TokenRefreshResponse refreshToken(String refreshToken) {
+        // 1. Validate the refresh token cryptographically
+        if (!jwtService.isTokenValid(refreshToken)) {
+            throw new UnauthorizedException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
+        }
+
+        // 2. Resolve the user
+        final var subject = jwtService.extractSubject(refreshToken);
+        final var publicId = UUID.fromString(subject);
+        final var user = userRepo.findByPublicId(publicId)
+                .orElseThrow(() -> new UnauthorizedException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
+
+        // 3. Check token_version match
+        final var tokenVersion = jwtService.extractTokenVersion(refreshToken);
+        if (!user.getTokenVersion().equals(tokenVersion)) {
+            throw new UnauthorizedException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
+        }
+
+        // 4. Issue new pair
+        final var adapter = new AppUserDetailsAdapter(user);
+        final var accessToken = jwtService.generateAccessToken(adapter);
+        final var newRefreshToken = jwtService.generateRefreshToken(adapter);
+
+        return TokenRefreshResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(newRefreshToken)
+                .build();
+    }
 
     // LOGOUT
 

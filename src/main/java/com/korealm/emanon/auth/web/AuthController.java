@@ -40,7 +40,13 @@ public class AuthController {
         return ResponseEntity.ok(res);
     }
 
-    // REFRESH JWT
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenRefreshResponse> refresh(
+            @Valid @RequestBody TokenRefreshRequest req
+    ) {
+        final var response = service.refreshToken(req.refreshToken());
+        return ResponseEntity.ok(response);
+    }
 
     // LOGOUT
 

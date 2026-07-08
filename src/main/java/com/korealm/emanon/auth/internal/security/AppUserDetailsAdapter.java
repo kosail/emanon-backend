@@ -1,9 +1,8 @@
 package com.korealm.emanon.auth.internal.security;
 
 import com.korealm.emanon.auth.internal.data.models.AppUser;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.Nullable;
+import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,11 +10,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
-@Getter
-@RequiredArgsConstructor
-public class AppUserDetailsAdapter implements UserDetails {
-    private final AppUser user;
-
+@NullMarked
+public record AppUserDetailsAdapter(@NotNull AppUser user) implements UserDetails {
     // TODO: Update this into the existing granular control per action
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -55,12 +51,4 @@ public class AppUserDetailsAdapter implements UserDetails {
         return user.getDeletedAt() == null;
     }
 
-    @Override
-    public boolean isAccountNonExpired() { return true; }
-
-    @Override
-    public boolean isAccountNonLocked() { return true; }
-
-    @Override
-    public boolean isCredentialsNonExpired() { return true; }
 }
