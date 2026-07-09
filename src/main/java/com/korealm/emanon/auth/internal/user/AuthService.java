@@ -9,14 +9,13 @@ import com.korealm.emanon.auth.internal.data.models.LoginHistory;
 import com.korealm.emanon.auth.internal.data.repositories.AppUserProfileRepository;
 import com.korealm.emanon.auth.internal.data.repositories.AppUserRepository;
 import com.korealm.emanon.auth.internal.data.repositories.LoginHistoryRepository;
-import com.korealm.emanon.shared.exceptions.UnauthorizedException;
 import com.korealm.emanon.auth.internal.exception.UserAlreadyExistsException;
 import com.korealm.emanon.auth.internal.exception.UserNotFoundException;
 import com.korealm.emanon.auth.internal.security.AppUserDetailsAdapter;
+import com.korealm.emanon.security.JwtService;
 import com.korealm.emanon.security.TokenResolver;
-import com.korealm.emanon.shared.exceptions.DomainException;
 import com.korealm.emanon.shared.exceptions.InvalidSourceIpAddressException;
-import com.korealm.emanon.security.jwt.JwtService;
+import com.korealm.emanon.shared.exceptions.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.http.HttpStatus;
@@ -29,11 +28,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.time.OffsetDateTime;
 
 @NullMarked
 @Service
 @RequiredArgsConstructor
-public class AuthUserService implements UserLookupPort {
+public class AuthService implements UserLookupPort {
 
     private final AppUserRepository userRepo;
     private final AppUserProfileRepository profileRepo;
@@ -58,7 +58,7 @@ public class AuthUserService implements UserLookupPort {
      * We don't distinguish between failure reasons. Every failure returns
      * the same error message to prevent username enumeration.
      */
-    public LoginResponse loginUser(LoginRequest req, RequestMetadata meta) {
+    public LoginResponse loginUser(final LoginRequest req, final RequestMetadata meta) {
         final var unauthenticated = new UsernamePasswordAuthenticationToken(
                 req.username(), req.password()
         );
@@ -70,13 +70,16 @@ public class AuthUserService implements UserLookupPort {
             final var authenticated = authManager.authenticate(unauthenticated);
             principal = (AppUserDetailsAdapter) authenticated.getPrincipal();
 
-        } catch (AuthenticationException ex) {
+        } catch (AuthenticationException _) {
             // 3. Failure: resolve user for history logging, then record and rethrow
             final var user = userRepo.findByUsername(req.username()).orElse(null);
             final var login = generateLogin(user, meta, false);
             loginHistoryRepo.saveAndFlush(login);
 
-            throw mapToDomainException(ex);
+            throw new UnauthorizedException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Invalid username or password"
+            );
         }
 
         // 4. Success: record login history
@@ -85,6 +88,9 @@ public class AuthUserService implements UserLookupPort {
 
         loginHistoryRepo.save(loginHistory);
 
+        user.setLastSeenAt(OffsetDateTime.now());
+
+        // 5. Issue Access and Refresh JWT tokens
         final var authInfo = AuthenticationUserInfo.builder()
                 .publicId(user.getPublicId())
                 .username(user.getUsername())
@@ -94,6 +100,7 @@ public class AuthUserService implements UserLookupPort {
         final var accessToken = jwtService.generateAccessToken(authInfo);
         final var refreshToken = jwtService.generateRefreshToken(authInfo);
 
+        // 6. Build final response
         final var profilePicture = profileRepo.findByUserId(user.getId());
         final var profilePictureUrl = profilePicture.map(AppUserProfile::getProfilePictureUrl).orElse(null);
 
@@ -109,7 +116,7 @@ public class AuthUserService implements UserLookupPort {
     }
 
     @Transactional
-    public CreateUserResponse registerNewUser(CreateUserRequest req) {
+    public CreateUserResponse registerNewUser(final CreateUserRequest req) {
         final var existing = userRepo.findByUsernameOrEmail(req.username(), req.email());
 
         if (existing.isPresent()) throw new UserAlreadyExistsException(HttpStatus.CONFLICT, "User already exists");
@@ -136,7 +143,7 @@ public class AuthUserService implements UserLookupPort {
                 .build();
     }
 
-    public TokenRefreshResponse refreshToken(String refreshToken) {
+    public TokenRefreshResponse refreshToken(final String refreshToken) {
         // 1. Resolve the user in a UserDetails object
         final var userDetails = tokenResolver.resolveToken(refreshToken);
         final var user = ((AppUserDetailsAdapter) userDetails).user();
@@ -158,6 +165,15 @@ public class AuthUserService implements UserLookupPort {
     }
 
     // LOGOUT
+    @Transactional
+    public void logout(final AppUser user) {
+        user.setLastSeenAt(OffsetDateTime.now());
+
+        // The filter now rejects all existing JWTs for this user
+        // because the token_version in the JWT no longer matches the DB
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        userRepo.save(user);
+    }
 
     // FORGOT PASSWORD
 
@@ -182,29 +198,15 @@ public class AuthUserService implements UserLookupPort {
         try {
             login.setIpAddress(InetAddress.getByName(meta.ipAddress()));
         } catch (UnknownHostException e) {
-            login.setIpAddress(null);
             throw new InvalidSourceIpAddressException(HttpStatus.BAD_REQUEST, "Invalid source in request.");
         }
 
         return login;
     }
 
-    /**
-     * Maps Spring Security internal exceptions to EMANON's domain exceptions.
-     * All authentication failures surface as the same generic message to
-     * prevent user enumeration (attacker can't tell if user doesn't exist,
-     * is deactivated, or has wrong password).
-     */
-    private DomainException mapToDomainException(AuthenticationException ex) {
-        return new UnauthorizedException(
-                HttpStatus.UNAUTHORIZED,
-                "Invalid username or password"
-        );
-    }
-
 
     @Override
-    public AppUser findActiveById(Long userId) {
+    public AppUser findActiveById(final Long userId) {
         return userRepo
                 .findByIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new UserNotFoundException(

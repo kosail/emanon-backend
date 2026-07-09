@@ -1,6 +1,5 @@
-package com.korealm.emanon.security.jwt;
+package com.korealm.emanon.security;
 
-import com.korealm.emanon.security.TokenResolver;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

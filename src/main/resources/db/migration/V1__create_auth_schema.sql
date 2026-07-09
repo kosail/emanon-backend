@@ -91,7 +91,7 @@ CREATE TABLE auth.login_history (
 
     -- Origin IP address. Stored as INET (not VARCHAR) for correct sorting,
     -- CIDR matching, and IP family (v4/v6) awareness.
-    -- NULL = login attempt failed due to invalid IP address.
+    -- NULL = login attempt failed due to an invalid IP address.
     ip_address      INET,
 
     -- User-Agent header from the login request. Capped at 255 characters
@@ -109,10 +109,11 @@ CREATE TABLE auth.login_history (
 
     CONSTRAINT pk_login_history PRIMARY KEY (id),
     CONSTRAINT chk_login_history_ip_consistency CHECK (
-        (ip_address IS NULL AND success = FALSE)
-            OR
-        (ip_address IS NOT NULL AND success = TRUE)
-    )
+        success IS FALSE OR ip_address IS NOT NULL
+    ),
+    CONSTRAINT chk_login_history_user_consistency CHECK (
+        success IS FALSE OR user_id IS NOT NULL
+        )
 );
 
 

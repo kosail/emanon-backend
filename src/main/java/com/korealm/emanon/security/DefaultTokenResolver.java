@@ -1,7 +1,6 @@
-package com.korealm.emanon.security.jwt;
+package com.korealm.emanon.security;
 
 import com.korealm.emanon.auth.AuthenticationPort;
-import com.korealm.emanon.security.TokenResolver;
 import com.korealm.emanon.shared.exceptions.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;

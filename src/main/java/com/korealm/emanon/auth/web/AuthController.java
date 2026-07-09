@@ -1,12 +1,14 @@
 package com.korealm.emanon.auth.web;
 
 import com.korealm.emanon.auth.internal.data.dto.*;
-import com.korealm.emanon.auth.internal.user.AuthUserService;
+import com.korealm.emanon.auth.internal.data.models.AppUser;
+import com.korealm.emanon.auth.internal.user.AuthService;
 import com.korealm.emanon.security.SecurityHelper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
-    private final AuthUserService service;
+    private final AuthService service;
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
@@ -49,6 +51,13 @@ public class AuthController {
     }
 
     // LOGOUT
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @AuthenticationPrincipal AppUser user
+            ) {
+        service.logout(user);
+        return ResponseEntity.noContent().build();
+    }
 
-    // FORGOT PASSWORD
+    // TODO: FORGOT PASSWORD
 }

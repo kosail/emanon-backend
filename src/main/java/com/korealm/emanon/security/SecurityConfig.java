@@ -1,6 +1,5 @@
 package com.korealm.emanon.security;
 
-import com.korealm.emanon.security.jwt.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;

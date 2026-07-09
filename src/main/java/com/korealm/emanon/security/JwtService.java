@@ -1,4 +1,4 @@
-package com.korealm.emanon.security.jwt;
+package com.korealm.emanon.security;
 
 import com.korealm.emanon.auth.AuthenticationUserInfo;
 import io.jsonwebtoken.Claims;
