@@ -37,6 +37,11 @@ public class DefaultTokenResolver implements TokenResolver {
             throw new UnauthorizedException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
         }
 
+        // 4. Check if the user has not been soft-deleted
+        if (!userDetails.isEnabled()) {
+            throw new UnauthorizedException(HttpStatus.UNAUTHORIZED, "The user is disabled");
+        }
+
         return userDetails;
     }
 }

@@ -48,7 +48,7 @@ public record AppUserDetailsAdapter(@NotNull AppUser user) implements UserDetail
      */
     @Override
     public boolean isEnabled() {
-        return user.getDeletedAt() == null;
+        return user.getDeletedAt() == null || user.getDeletedBy() == null;
     }
 
 }

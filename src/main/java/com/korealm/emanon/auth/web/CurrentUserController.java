@@ -28,7 +28,7 @@ public class CurrentUserController {
     // UPDATE PROFILE DESCRIPTION
     @PostMapping
     public ResponseEntity<Void> updateProfile(
-            @Valid @NotNull UserProfileUpdateRequest req,
+            @Valid @NotNull @RequestBody UserProfileUpdateRequest req,
             @AuthenticationPrincipal AppUserDetailsAdapter currentUser
     ) {
         service.updateUserProfile(req, currentUser.user());
@@ -36,9 +36,9 @@ public class CurrentUserController {
     }
 
     // UPDATE USER PROFILE
-    @PostMapping("/profile-picture/upload-url")
+    @PostMapping("/profile-picture/upload")
     public ResponseEntity<ProfilePictureUploadResponse> requestUpload(
-            @Valid @NotNull ProfilePictureUploadRequest req,
+            @Valid @NotNull @RequestBody ProfilePictureUploadRequest req,
             @AuthenticationPrincipal AppUserDetailsAdapter currentUser
     ) {
         final var response = service.requestUpload(
@@ -64,7 +64,7 @@ public class CurrentUserController {
     // CHANGE PASSWORD (INCREMENTS TOKEN_VERSION)
     @PutMapping("/password")
     public ResponseEntity<UpdateCurrentUserPasswordResponse> updatePassword(
-            @Valid @NotNull UpdateCurrentUserPasswordRequest req,
+            @Valid @NotNull @RequestBody UpdateCurrentUserPasswordRequest req,
             @AuthenticationPrincipal AppUserDetailsAdapter currentUser
     ) {
         final var res = service.updateCurrentUserPassword(req, currentUser.user());

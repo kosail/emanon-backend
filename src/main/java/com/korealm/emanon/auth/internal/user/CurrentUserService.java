@@ -30,7 +30,7 @@ public class CurrentUserService {
     private final JwtService jwtService;
     private final StorageService storage;
 
-    @Value("${cdn.storage.profile_storage_path") private String storagePath;
+    @Value("${cdn.storage.profile_storage_path}") private String storagePath;
     @Value("${cdn.storage.presigned_url_expiration_seconds}") private int presignedUrlExpirationSeconds;
 
 
@@ -57,14 +57,14 @@ public class CurrentUserService {
             final UserProfileUpdateRequest req,
             final AppUser user
     ) {
-        final var profile = profileRepo.findByUserId(user.getId())
-                .orElseThrow(() -> new IllegalStateException("User profile not found"));
-
         if (req.description() != null) {
+            final var profile = profileRepo.findByUserId(user.getId())
+                    .orElseThrow(() -> new IllegalStateException("User profile not found"));
+
             profile.setUserDescription(req.description());
             profileRepo.save(profile);
         }
-        
+
         if (req.firstName() != null) user.setFirstName(req.firstName());
         if (req.lastName() != null) user.setLastName(req.lastName());
         if (req.username() != null) user.setUsername(req.username());
@@ -117,6 +117,9 @@ public class CurrentUserService {
         profile.setDeletedAt(now);
         user.setDeletedAt(now);
         user.setDeletedBy(user);
+
+        userRepo.save(user);
+        profileRepo.save(profile);
     }
 
 
