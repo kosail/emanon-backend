@@ -52,9 +52,7 @@ public class AuthController {
 
     // LOGOUT
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(
-            @AuthenticationPrincipal AppUser user
-            ) {
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal AppUser user) {
         service.logout(user);
         return ResponseEntity.noContent().build();
     }

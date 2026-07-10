@@ -5,8 +5,10 @@ import com.korealm.emanon.auth.internal.data.dto.*;
 import com.korealm.emanon.auth.internal.data.models.AppUser;
 import com.korealm.emanon.auth.internal.data.repositories.AppUserProfileRepository;
 import com.korealm.emanon.auth.internal.data.repositories.AppUserRepository;
+import com.korealm.emanon.auth.internal.exception.IllegalUserStateException;
 import com.korealm.emanon.security.JwtService;
 import com.korealm.emanon.shared.StorageService;
+import com.korealm.emanon.shared.exceptions.InvalidRequestException;
 import com.korealm.emanon.shared.exceptions.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
@@ -37,7 +39,10 @@ public class CurrentUserService {
     @Transactional(readOnly = true)
     public CurrentUserProfileResponse getCurrentUser(final AppUser user) {
         final var profile = profileRepo.findByUserId(user.getId())
-                .orElseThrow(() -> new IllegalStateException("User profile not found"));
+                .orElseThrow(() -> new IllegalUserStateException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "User profile not found"
+                ));
 
         final var objectKey = profile.getProfilePictureUrl();
         final var profilePictureUrl = objectKey == null || objectKey.isBlank()
@@ -59,9 +64,13 @@ public class CurrentUserService {
     ) {
         if (req.description() != null) {
             final var profile = profileRepo.findByUserId(user.getId())
-                    .orElseThrow(() -> new IllegalStateException("User profile not found"));
+                    .orElseThrow(() -> new IllegalUserStateException(
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            "User profile not found"
+                    ));
 
             profile.setUserDescription(req.description());
+            profile.setUpdatedBy(user);
             profileRepo.save(profile);
         }
 
@@ -69,6 +78,9 @@ public class CurrentUserService {
         if (req.lastName() != null) user.setLastName(req.lastName());
         if (req.username() != null) user.setUsername(req.username());
         if (req.email() != null) user.setEmail(req.email());
+
+        user.setUpdatedBy(user);
+
         userRepo.save(user);
     }
 
@@ -86,10 +98,14 @@ public class CurrentUserService {
             final AppUser user
     ) {
         final var isSame = passwordEncoder.matches(req.newPassword(), user.getPasswordHash());
-        if (isSame) throw new IllegalArgumentException("New password must be different from the current one");
+        if (isSame) throw new InvalidRequestException(
+                HttpStatus.BAD_REQUEST,
+                "New password must be different from the current one"
+        );
 
         user.setPasswordHash(passwordEncoder.encode(req.newPassword()));
         user.setTokenVersion(user.getTokenVersion() + 1);
+        user.setUpdatedBy(user);
         userRepo.save(user);
 
         final var authInfo = AuthenticationUserInfo.builder()
@@ -110,12 +126,18 @@ public class CurrentUserService {
     @Transactional
     public void selfDeleteAccount(final AppUser user) {
         final var profile = profileRepo.findByUserId(user.getId())
-                        .orElseThrow(() -> new IllegalStateException("User profile not found"));
+                        .orElseThrow(() -> new IllegalUserStateException(
+                                HttpStatus.INTERNAL_SERVER_ERROR,
+                                "User profile not found"
+                        ));
 
         final var now = OffsetDateTime.now();
 
         profile.setDeletedAt(now);
         user.setDeletedAt(now);
+
+        profile.setUpdatedBy(user);
+        user.setUpdatedBy(user);
         user.setDeletedBy(user);
 
         userRepo.save(user);
@@ -175,7 +197,10 @@ public class CurrentUserService {
     ) {
         // Verify ownership of the object
         final var profile = profileRepo.findByUserId(user.getId())
-                .orElseThrow(() -> new IllegalStateException("User profile not found"));
+                .orElseThrow(() -> new IllegalUserStateException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "User profile not found"
+                ));
 
         if (!objectKey.startsWith(storagePath + "/" + user.getPublicId())) {
             throw new UnauthorizedException(
@@ -193,10 +218,29 @@ public class CurrentUserService {
 
         // Update the profile and return a presign URL for immediate display in the frontend
         profile.setProfilePictureUrl(objectKey);
+        profile.setUpdatedBy(user);
         profileRepo.save(profile);
 
         final var url = storage.generateDownloadUrl(objectKey);
         return new ProfilePictureConfirmResponse(url);
+    }
+
+    @Transactional
+    public void removeProfilePicture(final AppUser user) {
+        final var profile = profileRepo.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalUserStateException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "User profile not found"
+                ));
+
+        final var objectKey = profile.getProfilePictureUrl();
+        if (objectKey != null && !objectKey.isBlank()) {
+            storage.deleteObject(objectKey);
+        }
+
+        profile.setProfilePictureUrl(null);
+        profile.setUpdatedBy(user);
+        profileRepo.save(profile);
     }
 
 

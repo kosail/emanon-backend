@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,4 +17,5 @@ public interface AppUserRepository extends JpaRepository<AppUser, java.lang.Long
     Optional<AppUser> findByUsername(@NotBlank String username);
     Optional<AppUser> findByUsernameOrEmail(@NotBlank String username, @NotNull @Email String email);
     Optional<AppUser> findByPublicId(@NotNull UUID publicId);
+    List<AppUser> findAllByDeletedAtIsNullAndDeletedByIsNull();
 }

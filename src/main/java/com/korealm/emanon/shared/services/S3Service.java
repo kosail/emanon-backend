@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -23,7 +24,7 @@ public class S3Service implements StorageService {
     @Value("${cdn.storage.presigned_url_expiration_seconds}") private int presignedUrlExpirationSeconds;
 
     @Override
-    public String generateUploadUrl(String objectKey) {
+    public String generateUploadUrl(final String objectKey) {
         final var request = PutObjectPresignRequest.builder()
                 .signatureDuration(Duration.ofSeconds(presignedUrlExpirationSeconds))
                 .putObjectRequest(b -> b.bucket(bucket).key(objectKey))
@@ -33,7 +34,7 @@ public class S3Service implements StorageService {
     }
 
     @Override
-    public String generateDownloadUrl(String objectKey) {
+    public String generateDownloadUrl(final String objectKey) {
         final var request = GetObjectPresignRequest.builder()
                 .signatureDuration(Duration.ofSeconds(presignedUrlExpirationSeconds))
                 .getObjectRequest(b -> b.bucket(bucket).key(objectKey))
@@ -43,7 +44,7 @@ public class S3Service implements StorageService {
     }
 
     @Override
-    public boolean objectExists(String objectKey) {
+    public boolean objectExists(final String objectKey) {
         try {
             s3.headObject(
                     HeadObjectRequest.builder()
@@ -56,5 +57,14 @@ public class S3Service implements StorageService {
         } catch (NoSuchKeyException e) {
             return false;
         }
+    }
+
+    @Override
+    public void deleteObject(final String objectKey) {
+        s3.deleteObject(DeleteObjectRequest.builder()
+                .bucket(bucket)
+                .key(objectKey)
+                .build()
+        );
     }
 }

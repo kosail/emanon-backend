@@ -115,6 +115,15 @@ public class AuthService implements UserLookupPort {
                 .build();
     }
 
+    /**
+     * Registers a new user in the system by creating and persisting their account and profile.
+     *
+     * @param req the request object containing user registration details, such as username, email,
+     *            password, and personal information.
+     * @return a {@code CreateUserResponse} object containing the newly created user's public identifier
+     *         and other account details.
+     * @throws UserAlreadyExistsException if a user with the specified username or email already exists.
+     */
     @Transactional
     public CreateUserResponse registerNewUser(final CreateUserRequest req) {
         final var existing = userRepo.findByUsernameOrEmail(req.username(), req.email());
@@ -143,6 +152,14 @@ public class AuthService implements UserLookupPort {
                 .build();
     }
 
+    /**
+     * Refreshes the authentication tokens by generating a new access token and a new refresh token
+     * for a given valid refresh token. This method ensures that the user is authenticated based on
+     * the provided refresh token and issues a fresh set of tokens for continued access.
+     *
+     * @param refreshToken the refresh token used to authenticate the user and generate new tokens
+     * @return a {@link TokenRefreshResponse} object containing the new access token and refresh token
+     */
     public TokenRefreshResponse refreshToken(final String refreshToken) {
         // 1. Resolve the user in a UserDetails object
         final var userDetails = tokenResolver.resolveToken(refreshToken);
@@ -179,10 +196,9 @@ public class AuthService implements UserLookupPort {
 
 
     /**
-     * Utility to help constructing a LoginHistory entry.
-     *
-     * @throws InvalidSourceIpAddressException  When failed at IP conversion. Login from devices that hide their IP address is strictly prohibited
-     *
+     * Utility to help construct a LoginHistory entry.
+     * @throws InvalidSourceIpAddressException  When failed at IP conversion.
+     * Login from devices that hide their IP address is strictly prohibited.
      */
     private LoginHistory generateLogin(
             final AppUser user,
@@ -205,6 +221,14 @@ public class AuthService implements UserLookupPort {
     }
 
 
+    /**
+     * Finds an active user by their unique identifier.
+     * A user is considered active if they are not marked as deleted.
+     *
+     * @param userId the unique identifier of the user to be retrieved
+     * @return the active user corresponding to the provided userId
+     * @throws UserNotFoundException if no active user is found with the specified userId
+     */
     @Override
     public AppUser findActiveById(final Long userId) {
         return userRepo

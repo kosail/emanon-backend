@@ -61,6 +61,15 @@ public class CurrentUserController {
     }
 
 
+    @DeleteMapping("/profile-picture")
+    public ResponseEntity<Void> removeProfilePicture(
+            @AuthenticationPrincipal AppUserDetailsAdapter currentUser
+    ) {
+        service.removeProfilePicture(currentUser.user());
+        return ResponseEntity.noContent().build();
+    }
+
+
     // CHANGE PASSWORD (INCREMENTS TOKEN_VERSION)
     @PutMapping("/password")
     public ResponseEntity<UpdateCurrentUserPasswordResponse> updatePassword(
