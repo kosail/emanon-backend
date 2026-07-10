@@ -14,10 +14,10 @@ import java.net.URI;
 @Configuration
 public class S3Config {
 
-    @Value("${cdn.storage.endpoint}")     private String endpoint;
-    @Value("${cdn.storage.region}")       private String region;
-    @Value("${cdn.s3.access-key}")   private String accessKey;
-    @Value("${cdn.s3.secret-key}")   private String secretKey;
+    @Value("${storage.endpoint}")     private String endpoint;
+    @Value("${storage.region}")       private String region;
+    @Value("${s3.access-key}")   private String accessKey;
+    @Value("${s3.secret-key}")   private String secretKey;
 
     @Bean
     public S3Client s3Client() {

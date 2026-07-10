@@ -32,8 +32,8 @@ public class CurrentUserService {
     private final JwtService jwtService;
     private final StorageService storage;
 
-    @Value("${cdn.storage.profile_storage_path}") private String storagePath;
-    @Value("${cdn.storage.presigned_url_expiration_seconds}") private int presignedUrlExpirationSeconds;
+    @Value("${storage.profile_storage_path}") private String storagePath;
+    @Value("${storage.presigned_url_expiration_seconds}") private int presignedUrlExpirationSeconds;
 
 
     @Transactional(readOnly = true)

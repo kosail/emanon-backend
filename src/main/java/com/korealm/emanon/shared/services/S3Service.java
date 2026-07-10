@@ -20,8 +20,8 @@ public class S3Service implements StorageService {
     private final S3Client s3;
     private final S3Presigner presigner;
 
-    @Value("${cdn.storage.bucket}") private String bucket;
-    @Value("${cdn.storage.presigned_url_expiration_seconds}") private int presignedUrlExpirationSeconds;
+    @Value("${storage.bucket}") private String bucket;
+    @Value("${storage.presigned_url_expiration_seconds}") private int presignedUrlExpirationSeconds;
 
     @Override
     public String generateUploadUrl(final String objectKey) {
